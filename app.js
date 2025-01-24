@@ -27,17 +27,27 @@ const app = express();
 const port = 3000;
 
 app.post('/convert', upload.single('audio'), (req, res) => {
+  console.log(req.file); // Log para depuração
+
+  if (!req.file) {
+    return res.status(400).send('Nenhum arquivo enviado.');
+  }
+
   const inputPath = req.file.path;
-  const outputPath = `./uploads/${Date.now()}.ogg`;
+  const outputPath = path.join(uploadsDir, `${Date.now()}.ogg`);
+
+  console.log('Convertendo:', inputPath); // Log do arquivo de entrada
 
   ffmpeg(inputPath)
     .output(outputPath)
     .audioCodec('libvorbis')
     .on('end', () => {
+      console.log('Conversão concluída:', outputPath); // Log do arquivo de saída
       res.download(outputPath, (err) => {
         if (err) {
           console.log('Erro ao enviar o arquivo:', err);
         }
+        // Remover arquivos após o envio
         fs.unlinkSync(inputPath);
         fs.unlinkSync(outputPath);
       });
